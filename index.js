@@ -1,87 +1,67 @@
 import { useState } from "react";
 
-const STATUSES = [
-  { name: "Новая заявка", color: "#cceeff" },
-  { name: "В работе", color: "#ffd580" },
-  { name: "Предоплата", color: "#a5e3f7" },
-  { name: "Подготовка документов", color: "#f9b3dd" }
-];
+const statuses = ["Новая", "В работе", "Предоплата", "Документы"];
 
-export default function CRM() {
-  const [tasks, setTasks] = useState([]);
-  const [task, setTask] = useState({
-    title: "",
-    client: "",
-    amount: "",
-    status: STATUSES[0].name
-  });
+export default function Home() {
+  const [tasks, setTasks] = useState([
+    { id: 1, title: "Тур в Мексику", status: "Предоплата", sum: 280000 },
+    { id: 2, title: "Япония", status: "В работе", sum: 240000 },
+    { id: 3, title: "CRM заявка", status: "Новая", sum: 200000 },
+  ]);
+  const [newTask, setNewTask] = useState({ title: "", status: "Новая", sum: 0 });
 
   const addTask = () => {
-    if (!task.title || !task.amount) return;
-    setTasks([...tasks, { ...task, id: Date.now() }]);
-    setTask({ title: "", client: "", amount: "", status: STATUSES[0].name });
+    if (!newTask.title) return;
+    setTasks([...tasks, { ...newTask, id: Date.now() }]);
+    setNewTask({ title: "", status: "Новая", sum: 0 });
+  };
+
+  const moveTask = (id, direction) => {
+    setTasks(prev =>
+      prev.map(task => {
+        if (task.id === id) {
+          const currentIndex = statuses.indexOf(task.status);
+          const newIndex = currentIndex + direction;
+          if (newIndex >= 0 && newIndex < statuses.length) {
+            return { ...task, status: statuses[newIndex] };
+          }
+        }
+        return task;
+      })
+    );
   };
 
   return (
-    <div className="p-4 font-sans">
-      <h1 className="text-xl font-bold mb-4">CRM-сделки</h1>
-      <div className="flex gap-2 mb-6">
+    <div style={{ padding: 20, fontFamily: "sans-serif" }}>
+      <h2>Сделки</h2>
+      <div style={{ marginBottom: 20 }}>
         <input
-          className="border p-2 rounded"
-          placeholder="Сделка"
-          value={task.title}
-          onChange={(e) => setTask({ ...task, title: e.target.value })}
+          placeholder="Название сделки"
+          value={newTask.title}
+          onChange={e => setNewTask({ ...newTask, title: e.target.value })}
         />
         <input
-          className="border p-2 rounded"
-          placeholder="Клиент"
-          value={task.client}
-          onChange={(e) => setTask({ ...task, client: e.target.value })}
-        />
-        <input
-          className="border p-2 rounded"
-          placeholder="Сумма"
           type="number"
-          value={task.amount}
-          onChange={(e) => setTask({ ...task, amount: e.target.value })}
+          placeholder="Сумма"
+          value={newTask.sum}
+          onChange={e => setNewTask({ ...newTask, sum: Number(e.target.value) })}
         />
-        <select
-          className="border p-2 rounded"
-          value={task.status}
-          onChange={(e) => setTask({ ...task, status: e.target.value })}
-        >
-          {STATUSES.map((s) => (
-            <option key={s.name}>{s.name}</option>
-          ))}
-        </select>
-        <button
-          onClick={addTask}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          + Добавить сделку
-        </button>
+        <button onClick={addTask}>Добавить</button>
       </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        {STATUSES.map((status) => (
-          <div
-            key={status.name}
-            className="p-2 rounded shadow"
-            style={{ backgroundColor: status.color }}
-          >
-            <h2 className="font-bold text-sm mb-2">{status.name}</h2>
-            {tasks
-              .filter((t) => t.status === status.name)
-              .map((t) => (
-                <div
-                  key={t.id}
-                  className="bg-white rounded p-2 mb-2 shadow border"
-                >
-                  <div className="font-semibold">{t.title}</div>
-                  💰 {t.amount} руб <br />
-                  👤 {t.client || "Без имени"}
+      <div style={{ display: "flex", gap: 16 }}>
+        {statuses.map(status => (
+          <div key={status} style={{ flex: 1, background: "#f0f0f0", padding: 10 }}>
+            <h4>{status}</h4>
+            {tasks.filter(t => t.status === status).map(task => (
+              <div key={task.id} style={{ background: "#fff", padding: 10, marginBottom: 10, border: "1px solid #ccc" }}>
+                <strong>{task.title}</strong><br />
+                <span>{task.sum.toLocaleString()} ₽</span><br />
+                <div style={{ marginTop: 5 }}>
+                  <button onClick={() => moveTask(task.id, -1)}>←</button>
+                  <button onClick={() => moveTask(task.id, 1)}>→</button>
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         ))}
       </div>
