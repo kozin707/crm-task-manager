@@ -10,7 +10,7 @@ const statuses = [
 ];
 
 const initialDeals = [
-  { id: 1, client: "Zeplin", title: "SMM", sum: 1890ывывыыв000, labels: ["Горячий"], status: statuses[0] },
+  { id: 1, client: "Zeplin", title: "SMM", sum: 1890000, labels: ["Горячий"], status: statuses[0] },
   { id: 2, client: "Siri", title: "Доставка пиццы", sum: 720000, labels: ["Ждем оплаты"], status: statuses[1] },
   { id: 3, client: "Google", title: "Интеграция", sum: 2500000, labels: ["Горячий"], status: statuses[2] },
   { id: 4, client: "Panasonic", title: "Адаптация рекламных материалов", sum: 1100000, labels: ["Ждем оплаты"], status: statuses[3] }
