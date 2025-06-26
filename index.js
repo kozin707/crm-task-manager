@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const STATUS = ["Новый", "В работе", "Завершен"];
+
 export default function Home() {
   const [tasks, setTasks] = useState([]);
   const [task, setTask] = useState({
@@ -7,7 +9,7 @@ export default function Home() {
     priority: "Обычный",
     status: "Новый",
     assigned: "",
-    dueDate: ""
+    dueDate: "",
   });
 
   const addTask = () => {
@@ -16,29 +18,44 @@ export default function Home() {
     setTask({ title: "", priority: "Обычный", status: "Новый", assigned: "", dueDate: "" });
   };
 
-  const statuses = ["Новый", "В работе", "Готово", "Вопрос"];
-  const priorities = ["Обычный", "Срочный", "Низкий"];
+  const updateStatus = (id, newStatus) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, status: newStatus } : t));
+  };
 
   return (
-    <div style={{ padding: 20, fontFamily: 'sans-serif', maxWidth: 700, margin: '0 auto' }}>
-      <h1>Задачи в работе</h1>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
-        <input placeholder="Название задачи" value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} />
+    <div style={{ fontFamily: "sans-serif", padding: 20 }}>
+      <h1>CRM Kanban</h1>
+      <div style={{ marginBottom: 10 }}>
+        <input
+          placeholder="Заголовок"
+          value={task.title}
+          onChange={(e) => setTask({ ...task, title: e.target.value })}
+        />
         <select value={task.priority} onChange={(e) => setTask({ ...task, priority: e.target.value })}>
-          {priorities.map(p => <option key={p}>{p}</option>)}
+          <option>Обычный</option>
+          <option>Высокий</option>
+          <option>Низкий</option>
         </select>
-        <select value={task.status} onChange={(e) => setTask({ ...task, status: e.target.value })}>
-          {statuses.map(s => <option key={s}>{s}</option>)}
-        </select>
-        <input placeholder="Назначено на" value={task.assigned} onChange={(e) => setTask({ ...task, assigned: e.target.value })} />
+        <input placeholder="Кому назначено" value={task.assigned} onChange={(e) => setTask({ ...task, assigned: e.target.value })} />
         <input type="date" value={task.dueDate} onChange={(e) => setTask({ ...task, dueDate: e.target.value })} />
         <button onClick={addTask}>Добавить</button>
       </div>
-      <div>
-        {tasks.map(t => (
-          <div key={t.id} style={{ padding: 10, marginBottom: 10, border: '1px solid #ccc' }}>
-            <strong>{t.title}</strong><br />
-            Приоритет: {t.priority} | Статус: {t.status} | Назначено: {t.assigned} | Срок: {t.dueDate}
+
+      <div style={{ display: "flex", gap: 20 }}>
+        {STATUS.map((column) => (
+          <div key={column} style={{ width: "33%", background: "#f0f0f0", padding: 10, borderRadius: 5 }}>
+            <h3>{column}</h3>
+            {tasks.filter(t => t.status === column).map(t => (
+              <div key={t.id} style={{ background: "#fff", padding: 10, marginBottom: 10, borderRadius: 5 }}>
+                <b>{t.title}</b><br />
+                📌 {t.priority} <br />
+                👤 {t.assigned || "Не назначено"} <br />
+                📅 {t.dueDate || "Без срока"} <br />
+                <select value={t.status} onChange={(e) => updateStatus(t.id, e.target.value)}>
+                  {STATUS.map(s => <option key={s}>{s}</option>)}
+                </select>
+              </div>
+            ))}
           </div>
         ))}
       </div>
