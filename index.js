@@ -1,61 +1,87 @@
 import { useState } from "react";
 
-const STATUS = ["Новый", "В работе", "Завершен"];
+const STATUSES = [
+  { name: "Новая заявка", color: "#cceeff" },
+  { name: "В работе", color: "#ffd580" },
+  { name: "Предоплата", color: "#a5e3f7" },
+  { name: "Подготовка документов", color: "#f9b3dd" }
+];
 
-export default function Home() {
+export default function CRM() {
   const [tasks, setTasks] = useState([]);
   const [task, setTask] = useState({
     title: "",
-    priority: "Обычный",
-    status: "Новый",
-    assigned: "",
-    dueDate: "",
+    client: "",
+    amount: "",
+    status: STATUSES[0].name
   });
 
   const addTask = () => {
-    if (!task.title) return;
+    if (!task.title || !task.amount) return;
     setTasks([...tasks, { ...task, id: Date.now() }]);
-    setTask({ title: "", priority: "Обычный", status: "Новый", assigned: "", dueDate: "" });
-  };
-
-  const updateStatus = (id, newStatus) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, status: newStatus } : t));
+    setTask({ title: "", client: "", amount: "", status: STATUSES[0].name });
   };
 
   return (
-    <div style={{ fontFamily: "sans-serif", padding: 20 }}>
-      <h1>CRM Kanban</h1>
-      <div style={{ marginBottom: 10 }}>
+    <div className="p-4 font-sans">
+      <h1 className="text-xl font-bold mb-4">CRM-сделки</h1>
+      <div className="flex gap-2 mb-6">
         <input
-          placeholder="Заголовок"
+          className="border p-2 rounded"
+          placeholder="Сделка"
           value={task.title}
           onChange={(e) => setTask({ ...task, title: e.target.value })}
         />
-        <select value={task.priority} onChange={(e) => setTask({ ...task, priority: e.target.value })}>
-          <option>Обычный</option>
-          <option>Высокий</option>
-          <option>Низкий</option>
+        <input
+          className="border p-2 rounded"
+          placeholder="Клиент"
+          value={task.client}
+          onChange={(e) => setTask({ ...task, client: e.target.value })}
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Сумма"
+          type="number"
+          value={task.amount}
+          onChange={(e) => setTask({ ...task, amount: e.target.value })}
+        />
+        <select
+          className="border p-2 rounded"
+          value={task.status}
+          onChange={(e) => setTask({ ...task, status: e.target.value })}
+        >
+          {STATUSES.map((s) => (
+            <option key={s.name}>{s.name}</option>
+          ))}
         </select>
-        <input placeholder="Кому назначено" value={task.assigned} onChange={(e) => setTask({ ...task, assigned: e.target.value })} />
-        <input type="date" value={task.dueDate} onChange={(e) => setTask({ ...task, dueDate: e.target.value })} />
-        <button onClick={addTask}>Добавить</button>
+        <button
+          onClick={addTask}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          + Добавить сделку
+        </button>
       </div>
 
-      <div style={{ display: "flex", gap: 20 }}>
-        {STATUS.map((column) => (
-          <div key={column} style={{ width: "33%", background: "#f0f0f0", padding: 10, borderRadius: 5 }}>
-            <h3>{column}</h3>
-            {tasks.filter(t => t.status === column).map(t => (
-              <div key={t.id} style={{ background: "#fff", padding: 10, marginBottom: 10, borderRadius: 5 }}>
-                <b>{t.title}</b><br />
-                📌 {t.priority} <br />
-                👤 {t.assigned || "Не назначено"} <br />
-                📅 {t.dueDate || "Без срока"} <br />
-                <select value={t.status} onChange={(e) => updateStatus(t.id, e.target.value)}>
-                  {STATUS.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-            ))}
+      <div className="grid grid-cols-4 gap-4">
+        {STATUSES.map((status) => (
+          <div
+            key={status.name}
+            className="p-2 rounded shadow"
+            style={{ backgroundColor: status.color }}
+          >
+            <h2 className="font-bold text-sm mb-2">{status.name}</h2>
+            {tasks
+              .filter((t) => t.status === status.name)
+              .map((t) => (
+                <div
+                  key={t.id}
+                  className="bg-white rounded p-2 mb-2 shadow border"
+                >
+                  <div className="font-semibold">{t.title}</div>
+                  💰 {t.amount} руб <br />
+                  👤 {t.client || "Без имени"}
+                </div>
+              ))}
           </div>
         ))}
       </div>
