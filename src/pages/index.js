@@ -1,79 +1,92 @@
-// Kanban CRM аналог Bitrix24
-// С Drag & Drop и стилями, приближёнными к скриншоту
-
 import { useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
-const STATUSES = ["Новая заявка", "В работе", "Предоплата", "Подготовка документов"];
+const statuses = [
+  { id: "leads", title: "Входящие лиды" },
+  { id: "negotiation", title: "Переговоры" },
+  { id: "proposal", title: "Готовим предложение" },
+  { id: "decision", title: "Принимают решение" }
+];
 
-const Card = ({ task, index, moveCard, status }) => {
+const initialTasks = [
+  { id: 1, title: "Siri", subtitle: "Доставка пиццы", status: "leads", amount: 720000, label: "Ждём оплаты" },
+  { id: 2, title: "Zeplin", subtitle: "SMM", status: "leads", amount: 1890000, label: "Горячий" },
+  { id: 3, title: "Google", subtitle: "Интеграция", status: "proposal", amount: 2500000, label: "Горячий" },
+  { id: 4, title: "Panasonic", subtitle: "Адаптация рекламных материалов", status: "decision", amount: 1100000, label: "Ждём оплаты" }
+];
+
+function TaskCard({ task }) {
   const [{ isDragging }, drag] = useDrag(() => ({
-    type: "CARD",
-    item: { index, status },
-    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+    type: "task",
+    item: { id: task.id },
+    collect: (monitor) => ({ isDragging: !!monitor.isDragging() })
   }));
 
   return (
     <div
       ref={drag}
-      className="bg-white rounded-xl p-3 shadow-md mb-3 cursor-pointer hover:scale-[1.01] transition"
+      className="rounded-xl bg-white p-3 shadow mb-3 cursor-move border border-gray-200"
       style={{ opacity: isDragging ? 0.5 : 1 }}
     >
-      <div className="text-sm font-semibold">{task.title}</div>
-      <div className="text-xs text-gray-500">{task.amount} руб</div>
-      <div className="text-xs text-blue-500 mt-1">{task.person}</div>
+      <div className="text-sm font-bold mb-1 flex items-center gap-2">
+        <span className={`text-xs px-2 py-1 rounded-full ${getLabelColor(task.label)}`}>{task.label}</span>
+        <span>{task.title}</span>
+      </div>
+      <div className="text-xs text-gray-500">{task.subtitle}</div>
+      <div className="text-sm font-semibold mt-2">{task.amount.toLocaleString()} ₽</div>
     </div>
   );
-};
+}
 
-const Column = ({ status, tasks, moveCard, onDrop }) => {
+function Column({ status, tasks, moveTask }) {
   const [, drop] = useDrop(() => ({
-    accept: "CARD",
-    drop: (item) => onDrop(item.index, item.status, status),
+    accept: "task",
+    drop: (item) => moveTask(item.id, status.id)
   }));
 
   const total = tasks.reduce((sum, t) => sum + t.amount, 0);
 
   return (
-    <div className="bg-[#f0f8ff] rounded-2xl p-4 w-[280px] min-h-[500px] flex-shrink-0">
-      <h2 className="text-md font-bold mb-2 text-blue-700">{status} ({tasks.length})</h2>
-      <div className="text-sm font-semibold text-gray-800 mb-4">{total} руб</div>
-      <div ref={drop}>
-        {tasks.map((task, i) => (
-          <Card key={task.id} task={task} index={i} status={status} moveCard={moveCard} />
-        ))}
-      </div>
+    <div ref={drop} className="w-72 bg-gray-100 rounded-xl p-4">
+      <h2 className="font-bold text-sm mb-1">{status.title}</h2>
+      <p className="text-xs text-gray-500 mb-4">{tasks.length} сделок на {total.toLocaleString()} ₽</p>
+      {tasks.map((task) => (
+        <TaskCard key={task.id} task={task} />
+      ))}
     </div>
   );
-};
+}
 
-export default function KanbanCRM() {
-  const [tasks, setTasks] = useState([
-    { id: 1, title: "Тур в Японию", person: "Наталья", status: "В работе", amount: 240000 },
-    { id: 2, title: "Тур в Мексику", person: "Филипп", status: "Предоплата", amount: 280000 },
-    { id: 3, title: "Заявка сайта", person: "", status: "Новая заявка", amount: 0 },
-  ]);
+function getLabelColor(label) {
+  switch (label) {
+    case "Горячий": return "bg-red-100 text-red-700";
+    case "Ждём оплаты": return "bg-blue-100 text-blue-700";
+    case "На согласовании": return "bg-green-100 text-green-700";
+    case "Заморожено": return "bg-gray-300 text-gray-700";
+    default: return "bg-gray-200 text-gray-600";
+  }
+}
 
-  const moveCard = (fromIndex, fromStatus, toStatus) => {
-    const updated = [...tasks];
-    const movedItem = updated.find((_, i) => updated[i].status === fromStatus && i === fromIndex);
-    if (movedItem) movedItem.status = toStatus;
-    setTasks([...updated]);
+export default function CRMBoard() {
+  const [tasks, setTasks] = useState(initialTasks);
+
+  const moveTask = (id, newStatus) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t))
+    );
   };
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-gradient-to-br from-cyan-100 to-blue-100 p-6 overflow-x-auto">
-        <h1 className="text-2xl font-bold text-blue-900 mb-6">Сделки</h1>
-        <div className="flex space-x-4">
-          {STATUSES.map((status) => (
+      <div className="min-h-screen bg-gray-50 p-6 overflow-x-auto">
+        <div className="flex gap-6">
+          {statuses.map((status) => (
             <Column
-              key={status}
+              key={status.id}
               status={status}
-              tasks={tasks.filter((t) => t.status === status)}
-              moveCard={moveCard}
-              onDrop={moveCard}
+              tasks={tasks.filter((t) => t.status === status.id)}
+              moveTask={moveTask}
             />
           ))}
         </div>
