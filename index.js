@@ -1,70 +1,97 @@
 import { useState } from "react";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
-const statuses = ["Новая", "В работе", "Предоплата", "Документы"];
+const statuses = ["Новая заявка", "В работе", "Предоплата", "Подготовка документов"];
 
-export default function Home() {
+const ItemTypes = { CARD: "card" };
+
+function TaskCard({ task, moveCard }) {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: ItemTypes.CARD,
+    item: { id: task.id },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }));
+
+  return (
+    <div
+      ref={drag}
+      className="p-2 m-2 bg-white rounded shadow cursor-move text-sm"
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+    >
+      <div className="font-bold">{task.title}</div>
+      <div>{task.amount} руб</div>
+      <div className="text-xs text-gray-500">{task.assigned}</div>
+    </div>
+  );
+}
+
+function Column({ status, tasks, onDropTask }) {
+  const [, drop] = useDrop(() => ({
+    accept: ItemTypes.CARD,
+    drop: (item) => onDropTask(item.id, status),
+  }));
+
+  const sum = tasks.reduce((acc, task) => acc + task.amount, 0);
+
+  return (
+    <div ref={drop} className="w-1/4 bg-blue-100 p-2 m-2 rounded">
+      <h2 className="text-lg font-semibold">
+        {status} ({tasks.length})
+      </h2>
+      <p className="text-sm text-blue-700 font-bold mb-2">{sum} руб</p>
+      {tasks.map((task) => (
+        <TaskCard key={task.id} task={task} />
+      ))}
+    </div>
+  );
+}
+
+export default function KanbanCRM() {
   const [tasks, setTasks] = useState([
-    { id: 1, title: "Тур в Мексику", status: "Предоплата", sum: 280000 },
-    { id: 2, title: "Япония", status: "В работе", sum: 240000 },
-    { id: 3, title: "CRM заявка", status: "Новая", sum: 200000 },
+    {
+      id: 1,
+      title: "Заявка сайта",
+      assigned: "Наталья",
+      amount: 0,
+      status: "Новая заявка",
+    },
+    {
+      id: 2,
+      title: "Тур в Японию",
+      assigned: "Филипп",
+      amount: 240000,
+      status: "Предоплата",
+    },
+    {
+      id: 3,
+      title: "Тур в Мексику",
+      assigned: "Наталья",
+      amount: 280000,
+      status: "Предоплата",
+    },
   ]);
-  const [newTask, setNewTask] = useState({ title: "", status: "Новая", sum: 0 });
 
-  const addTask = () => {
-    if (!newTask.title) return;
-    setTasks([...tasks, { ...newTask, id: Date.now() }]);
-    setNewTask({ title: "", status: "Новая", sum: 0 });
-  };
-
-  const moveTask = (id, direction) => {
-    setTasks(prev =>
-      prev.map(task => {
-        if (task.id === id) {
-          const currentIndex = statuses.indexOf(task.status);
-          const newIndex = currentIndex + direction;
-          if (newIndex >= 0 && newIndex < statuses.length) {
-            return { ...task, status: statuses[newIndex] };
-          }
-        }
-        return task;
-      })
+  const handleDrop = (id, newStatus) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t))
     );
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "sans-serif" }}>
-      <h2>Сделки</h2>
-      <div style={{ marginBottom: 20 }}>
-        <input
-          placeholder="Название сделки"
-          value={newTask.title}
-          onChange={e => setNewTask({ ...newTask, title: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Сумма"
-          value={newTask.sum}
-          onChange={e => setNewTask({ ...newTask, sum: Number(e.target.value) })}
-        />
-        <button onClick={addTask}>Добавить</button>
-      </div>
-      <div style={{ display: "flex", gap: 16 }}>
-        {statuses.map(status => (
-          <div key={status} style={{ flex: 1, background: "#f0f0f0", padding: 10 }}>
-            <h4>{status}</h4>
-            {tasks.filter(t => t.status === status).map(task => (
-              <div key={task.id} style={{ background: "#fff", padding: 10, marginBottom: 10, border: "1px solid #ccc" }}>
-                <strong>{task.title}</strong><br />
-                <span>{task.sum.toLocaleString()} ₽</span><br />
-                <div style={{ marginTop: 5 }}>
-                  <button onClick={() => moveTask(task.id, -1)}>←</button>
-                  <button onClick={() => moveTask(task.id, 1)}>→</button>
-                </div>
-              </div>
-            ))}
-          </div>
+    <DndProvider backend={HTML5Backend}>
+      <div className="flex min-h-screen bg-gradient-to-b from-blue-200 to-cyan-100 p-4">
+        {statuses.map((status) => (
+          <Column
+            key={status}
+            status={status}
+            tasks={tasks.filter((t) => t.status === status)}
+            onDropTask={handleDrop}
+          />
         ))}
       </div>
-    </div>
+    </DndProvider>
   );
 }
