@@ -1,55 +1,67 @@
 import { useState } from "react";
 
+const statuses = ["Новая", "В работе", "Предоплата", "Документы"];
+
 export default function Home() {
-  const [tasks, setTasks] = useState([]);
-  const [task, setTask] = useState({
-    title: "",
-    priority: "Обычный",
-    status: "Новый",
-    assigned: "",
-    dueDate: "",
-  });
+  const [tasks, setTasks] = useState([
+    { id: 1, title: "Тур в Мексику", status: "Предоплата", sum: 280000 },
+    { id: 2, title: "Япония", status: "В работе", sum: 240000 },
+    { id: 3, title: "CRM заявка", status: "Новая", sum: 200000 },
+  ]);
+  const [newTask, setNewTask] = useState({ title: "", status: "Новая", sum: 0 });
 
   const addTask = () => {
-    if (!task.title) return;
-    setTasks([...tasks, { ...task, id: Date.now() }]);
-    setTask({
-      title: "",
-      priority: "Обычный",
-      status: "Новый",
-      assigned: "",
-      dueDate: "",
-    });
+    if (!newTask.title) return;
+    setTasks([...tasks, { ...newTask, id: Date.now() }]);
+    setNewTask({ title: "", status: "Новая", sum: 0 });
   };
 
-  const statuses = ["Новый", "В работе", "Готово", "Вопрос"];
-  const priorities = ["Обычный", "Срочный", "Низкий"];
+  const moveTask = (id, direction) => {
+    setTasks(prev =>
+      prev.map(task => {
+        if (task.id === id) {
+          const currentIndex = statuses.indexOf(task.status);
+          const newIndex = currentIndex + direction;
+          if (newIndex >= 0 && newIndex < statuses.length) {
+            return { ...task, status: statuses[newIndex] };
+          }
+        }
+        return task;
+      })
+    );
+  };
 
   return (
-    <div style={{ padding: 20, fontFamily: "sans-serif", maxWidth: 700, margin: "0 auto" }}>
-      <h1>Задачи в работе</h1>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
-        <input placeholder="Название задачи" value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} />
-        <select value={task.priority} onChange={(e) => setTask({ ...task, priority: e.target.value })}>
-          {priorities.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </select>
-        <select value={task.status} onChange={(e) => setTask({ ...task, status: e.target.value })}>
-          {statuses.map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-        <input placeholder="Назначено на" value={task.assigned} onChange={(e) => setTask({ ...task, assigned: e.target.value })} />
-        <input type="date" value={task.dueDate} onChange={(e) => setTask({ ...task, dueDate: e.target.value })} />
+    <div style={{ padding: 20, fontFamily: "sans-serif" }}>
+      <h2>Сделки</h2>
+      <div style={{ marginBottom: 20 }}>
+        <input
+          placeholder="Название сделки"
+          value={newTask.title}
+          onChange={e => setNewTask({ ...newTask, title: e.target.value })}
+        />
+        <input
+          type="number"
+          placeholder="Сумма"
+          value={newTask.sum}
+          onChange={e => setNewTask({ ...newTask, sum: Number(e.target.value) })}
+        />
         <button onClick={addTask}>Добавить</button>
       </div>
-      <div>
-        {tasks.map((t) => (
-          <div key={t.id} style={{ padding: 10, marginBottom: 10, border: "1px solid #ccc" }}>
-            <strong>{t.title}</strong>
-            <br />
-            Приоритет: {t.priority} | Статус: {t.status} | Назначено: {t.assigned} | Срок: {t.dueDate}
+      <div style={{ display: "flex", gap: 16 }}>
+        {statuses.map(status => (
+          <div key={status} style={{ flex: 1, background: "#f0f0f0", padding: 10 }}>
+            <h4>{status}</h4>
+            {tasks.filter(t => t.status === status).map(task => (
+              <div key={task.id} style={{ background: "#fff", padding: 10, marginBottom: 10, border: "1px solid #ccc" }}>
+                <strong>{task.title}</strong><br />
+                <span>{task.sum.toLocaleString()} ₽</span><br />
+                <div style={{ marginTop: 5 }}>
+                  <button onClick={() => moveTask(task.id, -1)}>←</button>
+                  <button onClick={() => moveTask(task.id, 1)}>→</button>
+                </div>
+              </div>
+            ))}
           </div>
         ))}
       </div>
